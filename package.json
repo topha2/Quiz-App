@@ -1,0 +1,11 @@
+{
+    "name": "nexus-quiz-app",
+    "version": "1.0.0",
+    "description": "Secure quiz application with real-time monitoring",
+    "scripts": {
+        "start": "npx serve ."
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC"
+}

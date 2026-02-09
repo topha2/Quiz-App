@@ -1,0 +1,9 @@
+/* Main styles are handled by Tailwind CDN, but we can add specific non-tailwind flourishes here if needed */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.glass {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
