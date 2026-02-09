@@ -52,11 +52,48 @@ function handleRealtimeUpdate(payload) {
     updateDashboard();
 }
 
+let currentFilter = 'all';
+
+function filterStudents(status) {
+    currentFilter = status;
+    updateDashboard();
+}
+
+function exportReport() {
+    if (attempts.length === 0) return alert("No data to export.");
+
+    // CSV Header
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Student Name,Email,Status,Score,Time Active,Started At\n";
+
+    // CSV Rows
+    attempts.forEach(row => {
+        const timeActive = getTimeActive(row.started_at, row.completed_at);
+        const rowString = `"${row.student_name}","${row.student_email || 'N/A'}","${row.status}",${row.score},"${timeActive}","${row.started_at}"`;
+        csvContent += rowString + "\n";
+    });
+
+    // Download Trigger
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "exam_report.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function updateDashboard() {
     const grid = document.getElementById('students-grid');
     grid.innerHTML = '';
 
-    // Update Stats
+    // Filter Logic
+    let displayAttempts = attempts;
+    if (currentFilter !== 'all') {
+        displayAttempts = attempts.filter(a => a.status === currentFilter);
+    }
+
+    // Update Stats (Always based on TOTAL attempts, not filtered)
     const active = attempts.filter(a => a.status === 'in-progress').length;
     const completed = attempts.filter(a => a.status === 'completed').length;
     const dq = attempts.filter(a => a.status === 'disqualified').length;
@@ -71,10 +108,14 @@ function updateDashboard() {
     document.getElementById('stat-avg').innerText = avgScore;
 
     // Render Cards
-    attempts.forEach(attempt => {
-        const card = createStudentCard(attempt);
-        grid.appendChild(card);
-    });
+    if (displayAttempts.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">No students found with this status.</div>';
+    } else {
+        displayAttempts.forEach(attempt => {
+            const card = createStudentCard(attempt);
+            grid.appendChild(card);
+        });
+    }
 }
 
 function createStudentCard(attempt) {
@@ -197,13 +238,14 @@ async function publishQuiz() {
 
     const title = document.getElementById('new-quiz-title').value;
     const duration = document.getElementById('new-quiz-duration').value;
+    const type = document.getElementById('new-quiz-type').value;
 
     if (!title) return alert("Please enter a quiz title");
 
     // 1. Create Quiz
     const { data: quizData, error: quizError } = await quizAppDb
         .from('quizzes')
-        .insert([{ title: title, duration_minutes: parseInt(duration) }])
+        .insert([{ title: title, duration_minutes: parseInt(duration), type: type }])
         .select();
 
     if (quizError) {

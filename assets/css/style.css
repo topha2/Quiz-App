@@ -4,6 +4,26 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Better Glassmorphism */
 .glass {
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body {
+    background-color: #f8fafc;
+    /* Light Slate 50 */
+    color: #0f172a;
+}
+
+body.dark {
+    background-color: #0f172a;
+    /* Dark Slate 900 */
+    color: white;
 }

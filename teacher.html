@@ -167,15 +167,24 @@
         </div>
 
         <!-- Monitoring Grid -->
-        <div class="mb-6 flex justify-between items-center">
+        <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h2 class="text-xl font-semibold dark:text-white text-gray-900">Live Session Feed</h2>
             <div class="flex gap-2">
-                <button
-                    class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-white/5 transition-colors dark:text-gray-300 text-gray-600">Filtered
-                    View</button>
-                <button
-                    class="px-4 py-2 bg-primary hover:bg-blue-600 rounded-lg text-sm font-medium text-white transition-colors">Export
-                    Report</button>
+                <select onchange="filterStudents(this.value)"
+                    class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-black/10 dark:border-white/5 transition-colors dark:text-gray-300 text-gray-600 outline-none">
+                    <option value="all">All Students</option>
+                    <option value="in-progress">Active</option>
+                    <option value="completed">Completed</option>
+                    <option value="disqualified">Disqualified</option>
+                </select>
+                <button onclick="exportReport()"
+                    class="px-4 py-2 bg-primary hover:bg-blue-600 rounded-lg text-sm font-medium text-white transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export CSV
+                </button>
             </div>
         </div>
 
@@ -189,20 +198,31 @@
 
         <!-- Create Quiz Tab -->
         <div id="view-create" class="hidden">
-            <div class="glass p-8 rounded-2xl border border-white/10 max-w-4xl mx-auto">
-                <h2 class="text-2xl font-bold mb-6 dark:text-white text-gray-900">Create New Exam</h2>
+            <div
+                class="glass p-8 rounded-2xl border border-white/10 max-w-4xl mx-auto bg-white dark:bg-gray-800/50 shadow-xl">
+                <h2 class="text-2xl font-bold mb-6 dark:text-white text-gray-900">Create New Assessment</h2>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-2">Quiz Title</label>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Title</label>
                         <input type="text" id="new-quiz-title"
-                            class="w-full bg-dark-light border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
-                            placeholder="e.g., Physics Final">
+                            class="w-full bg-gray-50 dark:bg-dark-light border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-gray-900 dark:text-white focus:border-primary outline-none"
+                            placeholder="e.g., Physics Midterm">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-2">Duration (Minutes)</label>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Type</label>
+                        <select id="new-quiz-type"
+                            class="w-full bg-gray-50 dark:bg-dark-light border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-gray-900 dark:text-white focus:border-primary outline-none h-[50px]">
+                            <option value="Quiz">Quiz</option>
+                            <option value="Exam">Exam</option>
+                            <option value="Assignment">Assignment</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-3">
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Duration
+                            (Minutes)</label>
                         <input type="number" id="new-quiz-duration"
-                            class="w-full bg-dark-light border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
+                            class="w-full bg-gray-50 dark:bg-dark-light border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-gray-900 dark:text-white focus:border-primary outline-none"
                             placeholder="60" value="60">
                     </div>
                 </div>

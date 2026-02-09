@@ -69,8 +69,10 @@ async function handleVisibilityChange() {
 
 async function startQuiz() {
     const name = document.getElementById('student-name-input').value;
+    const email = document.getElementById('student-email-input').value;
 
-    if (!name) return alert("Please enter your name.");
+    if (!name || !email) return alert("Please enter both your Name and Gmail.");
+    if (!email.includes('@')) return alert("Please enter a valid email address.");
 
     // Init Supabase if not already
     if (!quizAppDb) {
@@ -106,6 +108,7 @@ async function startQuiz() {
             .from('attempts')
             .insert([{
                 student_name: name,
+                student_email: email,
                 status: 'in-progress',
                 quiz_id: quizData.id
             }])
