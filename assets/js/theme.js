@@ -1,10 +1,12 @@
 // Theme Logic
 function initTheme() {
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    // Default to Light Mode if no preference is saved, OR if saved is 'light'
+    if (localStorage.theme === 'dark') {
         document.documentElement.classList.add('dark');
         updateThemeIcon(true);
     } else {
         document.documentElement.classList.remove('dark');
+        localStorage.theme = 'light'; // Ensure it's set
         updateThemeIcon(false);
     }
 }

@@ -229,32 +229,33 @@
 
                 <div id="questions-list" class="space-y-6 mb-8">
                     <!-- Question Item Template -->
-                    <div class="question-item p-6 rounded-xl bg-white/5 border border-white/10 relative">
+                    <div
+                        class="question-item p-6 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 relative shadow-sm">
                         <span class="absolute top-4 right-4 text-xs text-gray-500 font-mono">Q1</span>
                         <div class="mb-4">
                             <label class="block text-xs font-medium text-gray-500 mb-1">Question Text</label>
                             <input type="text"
-                                class="q-text w-full bg-transparent border-b border-gray-700 p-2 text-white focus:border-primary outline-none"
+                                class="q-text w-full bg-white dark:bg-transparent border-b-2 border-gray-200 dark:border-gray-700 p-2 text-gray-900 dark:text-white focus:border-primary outline-none transition-colors"
                                 placeholder="Enter question here...">
                         </div>
                         <div class="grid grid-cols-2 gap-4 mb-4">
                             <input type="text"
-                                class="q-opt-a w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                class="q-opt-a w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none"
                                 placeholder="Option A">
                             <input type="text"
-                                class="q-opt-b w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                class="q-opt-b w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none"
                                 placeholder="Option B">
                             <input type="text"
-                                class="q-opt-c w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                class="q-opt-c w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none"
                                 placeholder="Option C">
                             <input type="text"
-                                class="q-opt-d w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                class="q-opt-d w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none"
                                 placeholder="Option D">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">Correct Answer</label>
                             <select
-                                class="q-correct w-full bg-dark-light border border-gray-700 rounded p-2 text-sm text-white">
+                                class="q-correct w-full bg-white dark:bg-dark-light border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none">
                                 <option value="A">Option A</option>
                                 <option value="B">Option B</option>
                                 <option value="C">Option C</option>

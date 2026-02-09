@@ -140,23 +140,24 @@ function createStudentCard(attempt) {
         icon = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
     }
 
-    div.className = `group relative overflow-hidden rounded-2xl bg-gray-900/50 backdrop-blur-xl border border-white/10 p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:border-primary/30 ${attempt.status === 'disqualified' ? 'border-red-500/30 bg-red-900/10' : ''}`;
+    // Base classes for the card - use 'glass' for theme adaptability
+    div.className = `group relative overflow-hidden rounded-2xl glass p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:border-primary/50 ${attempt.status === 'disqualified' ? 'border-red-500/50 bg-red-50/50 dark:bg-red-900/10' : ''}`;
 
     div.innerHTML = `
         <!-- Status Indicator Dot -->
         <div class="absolute top-4 right-4">
-            <div class="flex items-center gap-2 px-3 py-1 rounded-full ${statusBg} border border-white/5 backdrop-blur-md shadow-lg">
+            <div class="flex items-center gap-2 px-3 py-1 rounded-full ${statusBg} border border-black/5 dark:border-white/5 backdrop-blur-md shadow-sm">
                 ${icon}
                 <span class="${statusColor} text-xs font-bold uppercase tracking-wider">${attempt.status}</span>
             </div>
         </div>
 
         <div class="flex items-center gap-4 mb-6">
-             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-800 to-gray-900 border border-white/10 flex items-center justify-center shadow-inner group-hover:from-primary/20 group-hover:to-purple-500/20 transition-all duration-500">
-                <span class="text-2xl font-bold text-white">${attempt.student_name.charAt(0)}</span>
+             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border border-black/5 dark:border-white/10 flex items-center justify-center shadow-inner text-gray-700 dark:text-white transition-all duration-500">
+                <span class="text-2xl font-bold">${attempt.student_name.charAt(0)}</span>
              </div>
              <div>
-                <h3 class="font-bold text-white text-xl tracking-tight group-hover:text-primary transition-colors">${attempt.student_name}</h3>
+                <h3 class="font-bold text-gray-900 dark:text-white text-xl tracking-tight transition-colors">${attempt.student_name}</h3>
                 <p class="text-xs text-gray-500 font-mono flex items-center gap-1">
                     <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
                     ID: ${attempt.id.substring(0, 8)}
@@ -165,13 +166,13 @@ function createStudentCard(attempt) {
         </div>
         
         <div class="grid grid-cols-2 gap-3 mb-2">
-             <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                <span class="text-gray-400 text-xs block mb-1">Current Score</span>
-                <span class="text-2xl font-bold text-white font-mono">${attempt.score !== null ? attempt.score : '-'}</span>
+             <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-3 border border-black/5 dark:border-white/5">
+                <span class="text-gray-500 dark:text-gray-400 text-xs block mb-1">Current Score</span>
+                <span class="text-2xl font-bold text-gray-900 dark:text-white font-mono">${attempt.score !== null ? attempt.score : '-'}</span>
             </div>
-            <div class="bg-white/5 rounded-xl p-3 border border-white/5">
-                <span class="text-gray-400 text-xs block mb-1">Time Active</span>
-                <span class="text-white font-bold font-mono">
+            <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-3 border border-black/5 dark:border-white/5">
+                <span class="text-gray-500 dark:text-gray-400 text-xs block mb-1">Time Active</span>
+                <span class="text-gray-900 dark:text-white font-bold font-mono">
                     ${getTimeActive(attempt.started_at, attempt.completed_at)}
                 </span>
             </div>
@@ -179,7 +180,7 @@ function createStudentCard(attempt) {
         
         ${attempt.status === 'in-progress' ? `
             <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-purple-600 opacity-50">
-                <div class="h-full w-full animate-pulse bg-white/20"></div>
+                <div class="h-full w-full animate-pulse bg-white/40"></div>
             </div>
         ` : ''}
     `;
@@ -207,22 +208,22 @@ function addQuestionUI() {
     const list = document.getElementById('questions-list');
     const count = list.children.length + 1;
     const div = document.createElement('div');
-    div.className = 'question-item p-6 rounded-xl bg-white/5 border border-white/10 relative';
+    div.className = 'question-item p-6 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 relative shadow-sm';
     div.innerHTML = `
         <span class="absolute top-4 right-4 text-xs text-gray-500 font-mono">Q${count}</span>
         <div class="mb-4">
             <label class="block text-xs font-medium text-gray-500 mb-1">Question Text</label>
-            <input type="text" class="q-text w-full bg-transparent border-b border-gray-700 p-2 text-white focus:border-primary outline-none" placeholder="Enter question here...">
+            <input type="text" class="q-text w-full bg-white dark:bg-transparent border-b-2 border-gray-200 dark:border-gray-700 p-2 text-gray-900 dark:text-white focus:border-primary outline-none transition-colors" placeholder="Enter question here...">
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-            <input type="text" class="q-opt-a w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option A">
-            <input type="text" class="q-opt-b w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option B">
-            <input type="text" class="q-opt-c w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option C">
-            <input type="text" class="q-opt-d w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option D">
+            <input type="text" class="q-opt-a w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option A">
+            <input type="text" class="q-opt-b w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option B">
+            <input type="text" class="q-opt-c w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option C">
+            <input type="text" class="q-opt-d w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option D">
         </div>
             <div>
             <label class="block text-xs font-medium text-gray-500 mb-1">Correct Answer</label>
-                <select class="q-correct w-full bg-dark-light border border-gray-700 rounded p-2 text-sm text-white">
+                <select class="q-correct w-full bg-white dark:bg-dark-light border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none">
                     <option value="A">Option A</option>
                     <option value="B">Option B</option>
                     <option value="C">Option C</option>
