@@ -3,9 +3,14 @@
 let attempts = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Initializing Teacher Dashboard...");
     quizAppDb = initSupabase();
     if (quizAppDb) {
+        console.log("Supabase Client Initialized. Starting monitor...");
         startMonitoring();
+    } else {
+        console.error("Supabase init failed.");
+        alert("Critical Error: database connection failed. Check console.");
     }
 });
 
@@ -21,6 +26,11 @@ async function fetchExistingAttempts() {
         .from('attempts')
         .select('*')
         .order('started_at', { ascending: false });
+
+    if (error) {
+        console.error("Error fetching attempts:", error);
+        // Don't alert here to avoid spamming, but log it.
+    }
 
     if (data) {
         attempts = data;
