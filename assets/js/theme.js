@@ -1,12 +1,13 @@
-// Theme Logic
+// Make Quiz - Theme Controller
+
 function initTheme() {
-    // Default to Light Mode if no preference is saved, OR if saved is 'light'
+    // Default to light mode (remove dark class)
     if (localStorage.theme === 'dark') {
         document.documentElement.classList.add('dark');
         updateThemeIcon(true);
     } else {
         document.documentElement.classList.remove('dark');
-        localStorage.theme = 'light'; // Ensure it's set
+        localStorage.theme = 'light';
         updateThemeIcon(false);
     }
 }
@@ -24,19 +25,19 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(isDark) {
-    // Some pages might not have the icon (like student view initially, but we will add it there too)
-    const sun = document.getElementById('theme-icon-sun');
-    const moon = document.getElementById('theme-icon-moon');
-    if (!sun || !moon) return;
+    const sunIcon = document.getElementById('theme-icon-sun');
+    const moonIcon = document.getElementById('theme-icon-moon');
 
-    if (isDark) {
-        sun.classList.add('hidden');
-        moon.classList.remove('hidden');
-    } else {
-        sun.classList.remove('hidden');
-        moon.classList.add('hidden');
+    if (sunIcon && moonIcon) {
+        if (isDark) {
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
     }
 }
 
-// Initialize on load
-initTheme();
+// Global initialization
+document.addEventListener('DOMContentLoaded', initTheme);

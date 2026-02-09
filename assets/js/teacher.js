@@ -1,313 +1,202 @@
-// Teacher Dashboard Logic
+// Make Quiz - Teacher Logic
 
 let attempts = [];
+let currentQuizId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Initializing Teacher Dashboard...");
-    quizAppDb = initSupabase();
-    if (quizAppDb) {
-        console.log("Supabase Client Initialized. Starting monitor...");
-        startMonitoring();
+    // Note: initSupabase is global from supabase-client.js
+    if (typeof quizAppDb === 'undefined' || !quizAppDb) {
+        console.warn("Supabase not auto-initialized. Waiting...");
     } else {
-        console.error("Supabase init failed.");
-        alert("Critical Error: database connection failed. Check console.");
+        startMonitoring();
     }
 });
 
-
-
 function startMonitoring() {
-    fetchExistingAttempts();
-    subscribeToRealtime();
-}
+    console.log("Teacher: Monitoring started.");
+    fetchAttempts();
 
-async function fetchExistingAttempts() {
-    const { data, error } = await quizAppDb
-        .from('attempts')
-        .select('*')
-        .order('started_at', { ascending: false });
-
-    if (error) {
-        console.error("Error fetching attempts:", error);
-        // Don't alert here to avoid spamming, but log it.
-    }
-
-    if (data) {
-        attempts = data;
-        updateDashboard();
-    }
-}
-
-function subscribeToRealtime() {
-    // Listen to ALL changes on 'attempts' table
-    quizAppDb
-        .channel('public:attempts')
+    // Subscribe to REALTIME
+    quizAppDb.channel('public:attempts')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'attempts' }, payload => {
-            console.log('Change received!', payload);
-            handleRealtimeUpdate(payload);
+            handleRealtime(payload);
         })
         .subscribe();
 }
 
-function handleRealtimeUpdate(payload) {
-    const { eventType, new: newRecord, old: oldRecord } = payload;
-
-    if (eventType === 'INSERT') {
-        attempts.unshift(newRecord);
-    } else if (eventType === 'UPDATE') {
-        const index = attempts.findIndex(a => a.id === newRecord.id);
-        if (index !== -1) attempts[index] = newRecord;
+async function fetchAttempts() {
+    const { data, error } = await quizAppDb.from('attempts').select('*').order('started_at', { ascending: false });
+    if (data) {
+        attempts = data;
+        renderDashboard();
     }
-
-    updateDashboard();
 }
 
-let currentFilter = 'all';
-
-function filterStudents(status) {
-    currentFilter = status;
-    updateDashboard();
+function handleRealtime(payload) {
+    const { eventType, new: newRec } = payload;
+    if (eventType === 'INSERT') {
+        attempts.unshift(newRec);
+    } else if (eventType === 'UPDATE') {
+        const idx = attempts.findIndex(a => a.id === newRec.id);
+        if (idx !== -1) attempts[idx] = newRec;
+    }
+    renderDashboard();
 }
 
-function exportReport() {
-    if (attempts.length === 0) return alert("No data to export.");
-
-    // CSV Header
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Student Name,Email,Status,Score,Time Active,Started At\n";
-
-    // CSV Rows
-    attempts.forEach(row => {
-        const timeActive = getTimeActive(row.started_at, row.completed_at);
-        const rowString = `"${row.student_name}","${row.student_email || 'N/A'}","${row.status}",${row.score},"${timeActive}","${row.started_at}"`;
-        csvContent += rowString + "\n";
-    });
-
-    // Download Trigger
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "exam_report.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-function updateDashboard() {
-    console.log("Updating Dashboard with attempts:", attempts);
+function renderDashboard() {
     const grid = document.getElementById('students-grid');
+    if (!grid) return;
     grid.innerHTML = '';
 
-    // Filter Logic
-    let displayAttempts = attempts;
-
-    // Explicitly handle 'all' case
-    if (currentFilter && currentFilter !== 'all') {
-        displayAttempts = attempts.filter(a => a.status === currentFilter);
-    } else {
-        // If 'all', show everything
-        displayAttempts = attempts;
-    }
-
-    // Update Stats (Always based on TOTAL attempts, not filtered)
     const active = attempts.filter(a => a.status === 'in-progress').length;
-    const completed = attempts.filter(a => a.status === 'completed').length;
+    const fin = attempts.filter(a => a.status === 'completed').length;
     const dq = attempts.filter(a => a.status === 'disqualified').length;
 
-    // safe division
-    const totalScored = attempts.filter(a => a.score != null && a.status === 'completed');
-    const avgScore = totalScored.length ? Math.round(totalScored.reduce((acc, curr) => acc + curr.score, 0) / totalScored.length) : 0;
-
     document.getElementById('stat-active').innerText = active;
-    document.getElementById('stat-completed').innerText = completed;
+    document.getElementById('stat-completed').innerText = fin;
     document.getElementById('stat-disqualified').innerText = dq;
-    document.getElementById('stat-avg').innerText = avgScore;
 
-    // Render Cards
-    if (displayAttempts.length === 0) {
-        grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">No students found with this status.</div>';
-    } else {
-        displayAttempts.forEach(attempt => {
-            const card = createStudentCard(attempt);
-            grid.appendChild(card);
-        });
+    if (attempts.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-20 text-center opacity-50">No students joined yet.</div>';
+        return;
     }
+
+    attempts.forEach(a => {
+        const card = document.createElement('div');
+        const statusClass = a.status === 'disqualified' ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/10' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700';
+
+        card.className = `p-6 rounded-2xl border shadow-sm ${statusClass} transition-all`;
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h4 class="font-bold text-lg">${a.student_name}</h4>
+                    <p class="text-xs font-medium text-slate-500">${a.student_email}</p>
+                </div>
+                <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-tighter ${getStatusBadge(a.status)}">${a.status}</span>
+            </div>
+            <div class="flex items-end justify-between">
+                <div>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">Score</p>
+                    <p class="text-xl font-black">${a.score}%</p>
+                </div>
+                <p class="text-[10px] text-slate-400 font-mono">${new Date(a.started_at).toLocaleTimeString()}</p>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
 }
 
-function createStudentCard(attempt) {
-    const div = document.createElement('div');
-
-    // Status Styles
-    let statusColor = 'text-gray-400';
-    let statusBg = 'bg-gray-500/10';
-    let icon = '';
-
-    if (attempt.status === 'in-progress') {
-        statusColor = 'text-green-400';
-        statusBg = 'bg-green-500/10';
-        icon = '<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>';
-    } else if (attempt.status === 'disqualified') {
-        statusColor = 'text-red-500';
-        statusBg = 'bg-red-500/10';
-        icon = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
-    } else if (attempt.status === 'completed') {
-        statusColor = 'text-blue-400';
-        statusBg = 'bg-blue-500/10';
-        icon = '<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
-    }
-
-    // Base classes for the card - use 'glass' for theme adaptability
-    div.className = `group relative overflow-hidden rounded-2xl glass p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:border-primary/50 ${attempt.status === 'disqualified' ? 'border-red-500/50 bg-red-50/50 dark:bg-red-900/10' : ''}`;
-
-    div.innerHTML = `
-        <!-- Status Indicator Dot -->
-        <div class="absolute top-4 right-4">
-            <div class="flex items-center gap-2 px-3 py-1 rounded-full ${statusBg} border border-black/5 dark:border-white/5 backdrop-blur-md shadow-sm">
-                ${icon}
-                <span class="${statusColor} text-xs font-bold uppercase tracking-wider">${attempt.status}</span>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-4 mb-6">
-             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border border-black/5 dark:border-white/10 flex items-center justify-center shadow-inner text-gray-700 dark:text-white transition-all duration-500">
-                <span class="text-2xl font-bold">${attempt.student_name.charAt(0)}</span>
-             </div>
-             <div>
-                <h3 class="font-bold text-gray-900 dark:text-white text-xl tracking-tight transition-colors">${attempt.student_name}</h3>
-                <p class="text-xs text-gray-500 font-mono flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-                    ID: ${attempt.id.substring(0, 8)}
-                </p>
-             </div>
-        </div>
-        
-        <div class="grid grid-cols-2 gap-3 mb-2">
-             <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-3 border border-black/5 dark:border-white/5">
-                <span class="text-gray-500 dark:text-gray-400 text-xs block mb-1">Current Score</span>
-                <span class="text-2xl font-bold text-gray-900 dark:text-white font-mono">${attempt.score !== null ? attempt.score : '-'}</span>
-            </div>
-            <div class="bg-gray-50 dark:bg-white/5 rounded-xl p-3 border border-black/5 dark:border-white/5">
-                <span class="text-gray-500 dark:text-gray-400 text-xs block mb-1">Time Active</span>
-                <span class="text-gray-900 dark:text-white font-bold font-mono">
-                    ${getTimeActive(attempt.started_at, attempt.completed_at)}
-                </span>
-            </div>
-        </div>
-        
-        ${attempt.status === 'in-progress' ? `
-            <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-purple-600 opacity-50">
-                <div class="h-full w-full animate-pulse bg-white/40"></div>
-            </div>
-        ` : ''}
-    `;
-
-    return div;
+function getStatusBadge(s) {
+    if (s === 'in-progress') return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600';
+    if (s === 'completed') return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600';
+    return 'bg-rose-100 dark:bg-rose-900/30 text-rose-600';
 }
 
 // Tabs
-function switchTab(tab) {
+function switchTab(t) {
     document.getElementById('view-monitor').classList.add('hidden');
     document.getElementById('view-create').classList.add('hidden');
+    document.getElementById('tab-monitor').className = "px-6 py-3 font-medium border-b-2 border-transparent text-slate-500";
+    document.getElementById('tab-create').className = "px-6 py-3 font-medium border-b-2 border-transparent text-slate-500";
 
-    document.getElementById('tab-monitor').classList.remove('border-primary', 'text-primary');
-    document.getElementById('tab-create').classList.remove('border-primary', 'text-primary');
-    document.getElementById('tab-monitor').classList.add('border-transparent');
-    document.getElementById('tab-create').classList.add('border-transparent');
-
-    document.getElementById(`view-${tab}`).classList.remove('hidden');
-    document.getElementById(`tab-${tab}`).classList.add('border-primary', 'text-primary');
-    document.getElementById(`tab-${tab}`).classList.remove('border-transparent');
+    document.getElementById(`view-${t}`).classList.remove('hidden');
+    document.getElementById(`tab-${t}`).className = "px-6 py-3 font-medium border-b-2 border-primary text-primary";
 }
 
-// Creation Logic
-function addQuestionUI() {
-    const list = document.getElementById('questions-list');
-    const count = list.children.length + 1;
+// Quiz Creation
+function addQuestionField() {
+    const container = document.getElementById('questions-container');
+    const idx = container.children.length + 1;
     const div = document.createElement('div');
-    div.className = 'question-item p-6 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 relative shadow-sm';
+    div.className = "question-entry p-6 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 relative";
     div.innerHTML = `
-        <span class="absolute top-4 right-4 text-xs text-gray-500 font-mono">Q${count}</span>
         <div class="mb-4">
-            <label class="block text-xs font-medium text-gray-500 mb-1">Question Text</label>
-            <input type="text" class="q-text w-full bg-white dark:bg-transparent border-b-2 border-gray-200 dark:border-gray-700 p-2 text-gray-900 dark:text-white focus:border-primary outline-none transition-colors" placeholder="Enter question here...">
+            <label class="block text-xs font-bold text-slate-400 mb-1">Question ${idx}</label>
+            <input type="text" class="q-text w-full bg-transparent border-b-2 border-slate-200 dark:border-slate-700 p-2 outline-none focus:border-primary font-medium" placeholder="Next question...">
         </div>
         <div class="grid grid-cols-2 gap-4 mb-4">
-            <input type="text" class="q-opt-a w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option A">
-            <input type="text" class="q-opt-b w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option B">
-            <input type="text" class="q-opt-c w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option C">
-            <input type="text" class="q-opt-d w-full bg-white dark:bg-dark-light/50 border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none" placeholder="Option D">
+            <input type="text" class="q-opt w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm" placeholder="Option 0">
+            <input type="text" class="q-opt w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm" placeholder="Option 1">
+            <input type="text" class="q-opt w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm" placeholder="Option 2">
+            <input type="text" class="q-opt w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm" placeholder="Option 3">
         </div>
-            <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1">Correct Answer</label>
-                <select class="q-correct w-full bg-white dark:bg-dark-light border border-gray-200 dark:border-gray-700 rounded p-2 text-sm text-gray-900 dark:text-white focus:border-primary outline-none">
-                    <option value="A">Option A</option>
-                    <option value="B">Option B</option>
-                    <option value="C">Option C</option>
-                    <option value="D">Option D</option>
-                </select>
+        <div>
+             <label class="block text-xs font-bold text-slate-400 mb-1">Correct Answer Index (0-3)</label>
+             <input type="number" class="q-correct w-20 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm" min="0" max="3" value="0">
         </div>
     `;
-    list.appendChild(div);
+    container.appendChild(div);
 }
 
 async function publishQuiz() {
-    if (!quizAppDb) return alert("Database not connected!");
+    const btn = document.getElementById('btn-publish');
+    const title = document.getElementById('quiz-title').value;
+    const duration = document.getElementById('quiz-duration').value;
 
-    const title = document.getElementById('new-quiz-title').value;
-    const duration = document.getElementById('new-quiz-duration').value;
-    const type = document.getElementById('new-quiz-type').value;
+    if (!title) return alert("Enter Quiz Title");
 
-    if (!title) return alert("Please enter a quiz title");
+    btn.disabled = true;
+    btn.innerText = "Publishing...";
 
-    // 1. Create Quiz
-    const { data: quizData, error: quizError } = await quizAppDb
-        .from('quizzes')
-        .insert([{ title: title, duration_minutes: parseInt(duration), type: type }])
-        .select();
+    try {
+        const { data: quiz, error: qe } = await quizAppDb.from('quizzes').insert([{ title, duration_minutes: parseInt(duration) }]).select();
+        if (qe) throw qe;
 
-    if (quizError) {
-        console.error(quizError);
-        return alert("Error creating quiz");
+        const qId = quiz[0].id;
+        const qItems = document.querySelectorAll('.question-entry');
+        const questionsBatch = [];
+
+        qItems.forEach(item => {
+            const text = item.querySelector('.q-text').value;
+            const options = Array.from(item.querySelectorAll('.q-opt')).map(i => i.value);
+            const correctIdx = item.querySelector('.q-correct').value;
+
+            if (text && options[0]) {
+                questionsBatch.push({
+                    quiz_id: qId,
+                    text: text,
+                    options: options,
+                    correct_answer: options[correctIdx] || options[0]
+                });
+            }
+        });
+
+        await quizAppDb.from('questions').insert(questionsBatch);
+
+        const shareUrl = `${window.location.origin}${window.location.pathname.replace('teacher.html', 'quiz.html')}?id=${qId}`;
+        document.getElementById('share-url').value = shareUrl;
+        document.getElementById('share-link-box').classList.remove('hidden');
+
+        alert("Quiz Published!");
+    } catch (e) {
+        console.error(e);
+        alert("Save failed. Check console.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Publish & Save";
     }
+}
 
-    const quizId = quizData[0].id;
+function copyLink() {
+    const input = document.getElementById('share-url');
+    input.select();
+    document.execCommand('copy');
+    alert("Share link copied!");
+}
 
-    // 2. Gather Questions
-    const questionItems = document.querySelectorAll('.question-item');
-    const questionsToInsert = [];
-
-    questionItems.forEach(item => {
-        const text = item.querySelector('.q-text').value;
-        const optA = item.querySelector('.q-opt-a').value;
-        const optB = item.querySelector('.q-opt-b').value;
-        const optC = item.querySelector('.q-opt-c').value;
-        const optD = item.querySelector('.q-opt-d').value;
-        const correctLetter = item.querySelector('.q-correct').value; // "A", "B"...
-
-        let correctVal = "";
-        if (correctLetter === "A") correctVal = optA;
-        if (correctLetter === "B") correctVal = optB;
-        if (correctLetter === "C") correctVal = optC;
-        if (correctLetter === "D") correctVal = optD;
-
-        if (text && optA) {
-            questionsToInsert.push({
-                quiz_id: quizId,
-                text: text,
-                options: [optA, optB, optC, optD],
-                correct_answer: correctVal
-            });
-        }
+function exportReport() {
+    if (attempts.length === 0) return;
+    let csv = "Name,Email,Status,Score,Date\n";
+    attempts.forEach(a => {
+        csv += `"${a.student_name}","${a.student_email}","${a.status}",${a.score},"${a.started_at}"\n`;
     });
-
-    // 3. Insert Questions
-    const { error: matchError } = await quizAppDb.from('questions').insert(questionsToInsert);
-
-    if (matchError) {
-        console.error(matchError);
-        alert("Quiz created but failed to save questions.");
-    } else {
-        alert("Quiz Published Successfully!");
-        location.reload();
-    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'reports.csv');
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
 }

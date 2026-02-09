@@ -1,34 +1,40 @@
--- 1. Create Tables
+-- Make Quiz - Final Rebuild Schema
+
+-- 1. Quizzes Table
 create table if not exists quizzes (
-  id uuid default uuid_generate_v4() primary key,
-  title text not null,
-  description text,
-  duration_minutes integer default 60,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+    id uuid default gen_random_uuid() primary key,
+    title text not null,
+    duration_minutes integer default 60,
+    created_at timestamp with time zone default now(),
+    is_active boolean default true
 );
 
+-- 2. Questions Table
 create table if not exists questions (
-  id uuid default uuid_generate_v4() primary key,
-  quiz_id uuid references quizzes(id) on delete cascade,
-  text text not null,
-  options jsonb not null,
-  correct_answer text not null,
-  points integer default 1
+    id uuid default gen_random_uuid() primary key,
+    quiz_id uuid references quizzes(id) on delete cascade,
+    text text not null,
+    options jsonb not null, -- Array of strings
+    correct_answer text not null,
+    created_at timestamp with time zone default now()
 );
 
+-- 3. Attempts Table
 create table if not exists attempts (
-  id uuid default uuid_generate_v4() primary key,
-  student_name text not null,
-  quiz_id uuid references quizzes(id) on delete cascade,
-  status text check (status in ('in-progress', 'completed', 'disqualified')) default 'in-progress',
-  score integer default 0,
-  warnings integer default 0,
-  started_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  completed_at timestamp with time zone
+    id uuid default gen_random_uuid() primary key,
+    quiz_id uuid references quizzes(id) on delete cascade,
+    student_email text not null,
+    student_name text not null,
+    status text default 'in-progress', -- 'in-progress', 'completed', 'disqualified'
+    score integer default 0,
+    started_at timestamp with time zone default now(),
+    completed_at timestamp with time zone,
+    
+    -- Enforce One-Entry Rule
+    constraint one_attempt_per_student unique (quiz_id, student_email)
 );
 
--- 2. Enable Realtime
--- We use a DO block to safely check if the publication exists and add the table
+-- Realtime Setup
 do $$
 begin
   if not exists (
@@ -40,10 +46,14 @@ begin
     alter publication supabase_realtime add table attempts;
   end if;
 exception
-  when undefined_object then null; -- Handle case where publication doesn't exist
+  when undefined_object then null;
 end $$;
 
--- 3. Seed Data
-insert into quizzes (title, description, duration_minutes) values 
-('Advanced Mathematics Midterm', 'Covering Calculus I and II', 60),
-('Physics 101 Finals', 'Mechanics and Thermodynamics', 90);
+-- Permissions (RLS)
+alter table quizzes enable row level security;
+alter table questions enable row level security;
+alter table attempts enable row level security;
+
+create policy "Enable access for all" on quizzes for all using (true) with check (true);
+create policy "Enable access for all" on questions for all using (true) with check (true);
+create policy "Enable access for all" on attempts for all using (true) with check (true);
