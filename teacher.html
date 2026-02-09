@@ -170,7 +170,7 @@
         <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h2 class="text-xl font-semibold dark:text-white text-gray-900">Live Session Feed</h2>
             <div class="flex gap-2">
-                <select onchange="filterStudents(this.value)"
+                <select id="filter-select" onchange="filterStudents(this.value)"
                     class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-black/10 dark:border-white/5 transition-colors dark:text-gray-300 text-gray-600 outline-none">
                     <option value="all">All Students</option>
                     <option value="in-progress">Active</option>

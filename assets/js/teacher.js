@@ -84,13 +84,19 @@ function exportReport() {
 }
 
 function updateDashboard() {
+    console.log("Updating Dashboard with attempts:", attempts);
     const grid = document.getElementById('students-grid');
     grid.innerHTML = '';
 
     // Filter Logic
     let displayAttempts = attempts;
-    if (currentFilter !== 'all') {
+
+    // Explicitly handle 'all' case
+    if (currentFilter && currentFilter !== 'all') {
         displayAttempts = attempts.filter(a => a.status === currentFilter);
+    } else {
+        // If 'all', show everything
+        displayAttempts = attempts;
     }
 
     // Update Stats (Always based on TOTAL attempts, not filtered)
