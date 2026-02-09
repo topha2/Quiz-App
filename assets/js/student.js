@@ -9,6 +9,7 @@ let timerInterval = null;
 
 // Anti-Cheat Variables
 let isCheatingDetected = false;
+let isQuizFinished = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize Supabase Client
@@ -108,14 +109,14 @@ function enterFullscreen() {
 function startAntiCheat() {
     // 1. Tab Switching
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden' && !isCheatingDetected) {
+        if (document.visibilityState === 'hidden' && !isCheatingDetected && !isQuizFinished) {
             detectCheating("Tab Switching Detection");
         }
     });
 
     // 2. Fullscreen Exit
     document.addEventListener('fullscreenchange', () => {
-        if (!document.fullscreenElement && !isCheatingDetected) {
+        if (!document.fullscreenElement && !isCheatingDetected && !isQuizFinished) {
             // Give 2 second grace maybe? No, rigid policy.
             detectCheating("Fullscreen Exit");
         }
@@ -206,7 +207,8 @@ function selectOption(opt) {
 }
 
 async function finishQuiz() {
-    if (isCheatingDetected) return;
+    if (isCheatingDetected || isQuizFinished) return;
+    isQuizFinished = true;
 
     clearInterval(timerInterval);
 
