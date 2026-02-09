@@ -11,6 +11,9 @@ let timerInterval = null;
 let isCheatingDetected = false;
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Supabase Client
+    quizAppDb = initSupabase();
+
     // Check URL for Quiz ID
     const urlParams = new URLSearchParams(window.location.search);
     const qid = urlParams.get('id');

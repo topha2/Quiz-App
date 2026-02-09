@@ -4,10 +4,14 @@ let attempts = [];
 let currentQuizId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Note: initSupabase is global from supabase-client.js
-    if (typeof quizAppDb === 'undefined' || !quizAppDb) {
-        console.warn("Supabase not auto-initialized. Waiting...");
+    // Initialize Supabase Client
+    quizAppDb = initSupabase();
+
+    if (!quizAppDb) {
+        console.error("Supabase could not be initialized.");
+        alert("Critical: Database connection failed. Please refresh.");
     } else {
+        console.log("Teacher: Database connected successfully.");
         startMonitoring();
     }
 });
@@ -161,16 +165,17 @@ async function publishQuiz() {
             }
         });
 
-        await quizAppDb.from('questions').insert(questionsBatch);
+        const { error: matchError } = await quizAppDb.from('questions').insert(questionsBatch);
+        if (matchError) throw matchError;
 
         const shareUrl = `${window.location.origin}${window.location.pathname.replace('teacher.html', 'quiz.html')}?id=${qId}`;
         document.getElementById('share-url').value = shareUrl;
         document.getElementById('share-link-box').classList.remove('hidden');
 
-        alert("Quiz Published!");
+        alert("Quiz Published Successfully!");
     } catch (e) {
-        console.error(e);
-        alert("Save failed. Check console.");
+        console.error("Detailed Error:", e);
+        alert("Save failed: " + (e.message || "Unknown Error"));
     } finally {
         btn.disabled = false;
         btn.innerText = "Publish & Save";
