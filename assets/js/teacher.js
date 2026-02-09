@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function startMonitoring() {
     console.log("Teacher: Monitoring started.");
-    fetchAttempts();
+    loadAvailableQuizzes();
 
     // Subscribe to REALTIME
     quizAppDb.channel('public:attempts')
@@ -28,8 +28,44 @@ function startMonitoring() {
         .subscribe();
 }
 
-async function fetchAttempts() {
-    const { data, error } = await quizAppDb.from('attempts').select('*').order('started_at', { ascending: false });
+async function loadAvailableQuizzes() {
+    const selector = document.getElementById('quiz-selector');
+    const { data, error } = await quizAppDb.from('quizzes').select('*').order('created_at', { ascending: false });
+
+    if (data) {
+        selector.innerHTML = '';
+        data.forEach((q, idx) => {
+            const opt = document.createElement('option');
+            opt.value = q.id;
+            opt.innerText = q.title + (idx === 0 ? " (Latest)" : "");
+            selector.appendChild(opt);
+        });
+
+        if (currentQuizId) {
+            selector.value = currentQuizId;
+        }
+
+        // Auto select latest if none selected
+        if (!currentQuizId && data.length > 0) {
+            currentQuizId = data[0].id;
+            selector.value = currentQuizId;
+            fetchAttempts(currentQuizId);
+        }
+    }
+}
+
+function changeMonitoredQuiz(id) {
+    currentQuizId = id;
+    fetchAttempts(id);
+}
+
+async function fetchAttempts(quizId) {
+    if (!quizId) return;
+    const { data, error } = await quizAppDb.from('attempts')
+        .select('*')
+        .eq('quiz_id', quizId)
+        .order('started_at', { ascending: false });
+
     if (data) {
         attempts = data;
         renderDashboard();
@@ -38,6 +74,10 @@ async function fetchAttempts() {
 
 function handleRealtime(payload) {
     const { eventType, new: newRec } = payload;
+
+    // Safety check: Only care about updates for the CURRENTLY SELECTED quiz
+    if (newRec.quiz_id !== currentQuizId) return;
+
     if (eventType === 'INSERT') {
         attempts.unshift(newRec);
     } else if (eventType === 'UPDATE') {
@@ -167,6 +207,11 @@ async function publishQuiz() {
 
         const { error: matchError } = await quizAppDb.from('questions').insert(questionsBatch);
         if (matchError) throw matchError;
+
+        // NEW: Load the new quiz into the selector and switch dashboard to it
+        currentQuizId = qId;
+        await loadAvailableQuizzes();
+        switchTab('monitor');
 
         const shareUrl = `${window.location.origin}${window.location.pathname.replace('teacher.html', 'quiz.html')}?id=${qId}`;
         document.getElementById('share-url').value = shareUrl;
