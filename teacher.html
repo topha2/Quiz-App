@@ -74,6 +74,18 @@
             </div>
 
             <div class="flex items-center gap-6">
+                <button onclick="toggleTheme()"
+                    class="p-2 rounded-full hover:bg-white/10 transition-colors text-gray-400 hover:text-white">
+                    <svg id="theme-icon-moon" class="w-6 h-6 hidden" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                    <svg id="theme-icon-sun" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </button>
                 <div class="flex items-center gap-2 px-4 py-2 bg-blue-500/10 rounded-full border border-blue-500/20">
                     <span class="relative flex h-3 w-3">
                         <span
@@ -97,34 +109,72 @@
     <main class="max-w-7xl mx-auto px-6 py-8">
 
         <!-- Stats Row -->
+        <!-- Stats Row -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="glass rounded-xl p-6 border-l-4 border-l-blue-500">
-                <p class="text-gray-400 text-sm mb-1">Active Students</p>
-                <h3 class="text-3xl font-bold" id="stat-active">0</h3>
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-blue-400 p-6 shadow-lg text-white">
+                <div class="relative z-10">
+                    <p class="text-blue-100 text-sm font-medium mb-1">Active Students</p>
+                    <h3 class="text-4xl font-bold" id="stat-active">0</h3>
+                </div>
+                <div class="absolute right-0 top-0 h-full w-full opacity-10 transform scale-150">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 4a4 4 0 100 8 4 4 0 000-8zM6 14a6 6 0 0112 0v4H6v-4z"></path>
+                    </svg>
+                </div>
             </div>
-            <div class="glass rounded-xl p-6 border-l-4 border-l-green-500">
-                <p class="text-gray-400 text-sm mb-1">Completed</p>
-                <h3 class="text-3xl font-bold" id="stat-completed">0</h3>
+
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-400 p-6 shadow-lg text-white">
+                <div class="relative z-10">
+                    <p class="text-teal-100 text-sm font-medium mb-1">Completed</p>
+                    <h3 class="text-4xl font-bold" id="stat-completed">0</h3>
+                </div>
+                <div class="absolute right-0 top-0 h-full w-full opacity-10 transform scale-150">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+                    </svg>
+                </div>
             </div>
-            <div class="glass rounded-xl p-6 border-l-4 border-l-red-500">
-                <p class="text-gray-400 text-sm mb-1">Disqualified</p>
-                <h3 class="text-3xl font-bold" id="stat-disqualified">0</h3>
+
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600 to-pink-500 p-6 shadow-lg text-white">
+                <div class="relative z-10">
+                    <p class="text-rose-100 text-sm font-medium mb-1">Disqualified</p>
+                    <h3 class="text-4xl font-bold" id="stat-disqualified">0</h3>
+                </div>
+                <div class="absolute right-0 top-0 h-full w-full opacity-10 transform scale-150">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z">
+                        </path>
+                    </svg>
+                </div>
             </div>
-            <div class="glass rounded-xl p-6 border-l-4 border-l-yellow-500">
-                <p class="text-gray-400 text-sm mb-1">Avg Score</p>
-                <h3 class="text-3xl font-bold" id="stat-avg">0%</h3>
+
+            <div
+                class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-400 p-6 shadow-lg text-white">
+                <div class="relative z-10">
+                    <p class="text-amber-100 text-sm font-medium mb-1">Avg Score</p>
+                    <h3 class="text-4xl font-bold" id="stat-avg">0%</h3>
+                </div>
+                <div class="absolute right-0 top-0 h-full w-full opacity-10 transform scale-150">
+                    <svg fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"></path>
+                    </svg>
+                </div>
             </div>
         </div>
 
         <!-- Monitoring Grid -->
         <div class="mb-6 flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Live Session Feed</h2>
+            <h2 class="text-xl font-semibold dark:text-white text-gray-900">Live Session Feed</h2>
             <div class="flex gap-2">
                 <button
-                    class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-white/5 transition-colors">Filtered
+                    class="px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm border border-white/5 transition-colors dark:text-gray-300 text-gray-600">Filtered
                     View</button>
                 <button
-                    class="px-4 py-2 bg-primary hover:bg-blue-600 rounded-lg text-sm font-medium transition-colors">Export
+                    class="px-4 py-2 bg-primary hover:bg-blue-600 rounded-lg text-sm font-medium text-white transition-colors">Export
                     Report</button>
             </div>
         </div>
@@ -135,10 +185,82 @@
                 Waiting for student connections...
             </div>
         </div>
+        </div>
+
+        <!-- Create Quiz Tab -->
+        <div id="view-create" class="hidden">
+            <div class="glass p-8 rounded-2xl border border-white/10 max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold mb-6 dark:text-white text-gray-900">Create New Exam</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Quiz Title</label>
+                        <input type="text" id="new-quiz-title"
+                            class="w-full bg-dark-light border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
+                            placeholder="e.g., Physics Final">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Duration (Minutes)</label>
+                        <input type="number" id="new-quiz-duration"
+                            class="w-full bg-dark-light border border-gray-700 rounded-lg p-3 text-white focus:border-primary outline-none"
+                            placeholder="60" value="60">
+                    </div>
+                </div>
+
+                <div id="questions-list" class="space-y-6 mb-8">
+                    <!-- Question Item Template -->
+                    <div class="question-item p-6 rounded-xl bg-white/5 border border-white/10 relative">
+                        <span class="absolute top-4 right-4 text-xs text-gray-500 font-mono">Q1</span>
+                        <div class="mb-4">
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Question Text</label>
+                            <input type="text"
+                                class="q-text w-full bg-transparent border-b border-gray-700 p-2 text-white focus:border-primary outline-none"
+                                placeholder="Enter question here...">
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <input type="text"
+                                class="q-opt-a w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                placeholder="Option A">
+                            <input type="text"
+                                class="q-opt-b w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                placeholder="Option B">
+                            <input type="text"
+                                class="q-opt-c w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                placeholder="Option C">
+                            <input type="text"
+                                class="q-opt-d w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white"
+                                placeholder="Option D">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Correct Answer</label>
+                            <select
+                                class="q-correct w-full bg-dark-light border border-gray-700 rounded p-2 text-sm text-white">
+                                <option value="A">Option A</option>
+                                <option value="B">Option B</option>
+                                <option value="C">Option C</option>
+                                <option value="D">Option D</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="addQuestionUI()"
+                    class="w-full py-3 rounded-xl border border-dashed border-gray-600 text-gray-400 hover:text-white hover:border-gray-400 transition-colors mb-6">+
+                    Add Another Question</button>
+
+                <div class="flex justify-end border-t border-white/10 pt-6">
+                    <button onclick="publishQuiz()"
+                        class="bg-gradient-to-r from-primary to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-500/20 transform transition-all active:scale-95">
+                        Publish Quiz
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </main>
 
-    <!-- Scripts -->
+    <!-- Theme Toggle Script to be added in teacher.js, but UI is updated via replacement above -->
+    <!-- We implicitly need to add the Toggle Button in the header, let's do another replacement for that -->
     <script src="assets/js/supabase-client.js"></script>
     <script src="assets/js/teacher.js"></script>
 </body>

@@ -146,10 +146,109 @@ function createStudentCard(attempt) {
     return div;
 }
 
-function getTimeActive(start, end) {
-    const s = new Date(start);
-    const e = end ? new Date(end) : new Date();
-    const diffMs = e - s;
-    const diffMins = Math.floor(diffMs / 60000);
-    return `${diffMins}m`;
+// Tabs
+function switchTab(tab) {
+    document.getElementById('view-monitor').classList.add('hidden');
+    document.getElementById('view-create').classList.add('hidden');
+
+    document.getElementById('tab-monitor').classList.remove('border-primary', 'text-primary');
+    document.getElementById('tab-create').classList.remove('border-primary', 'text-primary');
+    document.getElementById('tab-monitor').classList.add('border-transparent');
+    document.getElementById('tab-create').classList.add('border-transparent');
+
+    document.getElementById(`view-${tab}`).classList.remove('hidden');
+    document.getElementById(`tab-${tab}`).classList.add('border-primary', 'text-primary');
+    document.getElementById(`tab-${tab}`).classList.remove('border-transparent');
+}
+
+// Creation Logic
+function addQuestionUI() {
+    const list = document.getElementById('questions-list');
+    const count = list.children.length + 1;
+    const div = document.createElement('div');
+    div.className = 'question-item p-6 rounded-xl bg-white/5 border border-white/10 relative';
+    div.innerHTML = `
+        <span class="absolute top-4 right-4 text-xs text-gray-500 font-mono">Q${count}</span>
+        <div class="mb-4">
+            <label class="block text-xs font-medium text-gray-500 mb-1">Question Text</label>
+            <input type="text" class="q-text w-full bg-transparent border-b border-gray-700 p-2 text-white focus:border-primary outline-none" placeholder="Enter question here...">
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <input type="text" class="q-opt-a w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option A">
+            <input type="text" class="q-opt-b w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option B">
+            <input type="text" class="q-opt-c w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option C">
+            <input type="text" class="q-opt-d w-full bg-dark-light/50 border border-gray-700 rounded p-2 text-sm text-white" placeholder="Option D">
+        </div>
+            <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1">Correct Answer</label>
+                <select class="q-correct w-full bg-dark-light border border-gray-700 rounded p-2 text-sm text-white">
+                    <option value="A">Option A</option>
+                    <option value="B">Option B</option>
+                    <option value="C">Option C</option>
+                    <option value="D">Option D</option>
+                </select>
+        </div>
+    `;
+    list.appendChild(div);
+}
+
+async function publishQuiz() {
+    if (!quizAppDb) return alert("Database not connected!");
+
+    const title = document.getElementById('new-quiz-title').value;
+    const duration = document.getElementById('new-quiz-duration').value;
+
+    if (!title) return alert("Please enter a quiz title");
+
+    // 1. Create Quiz
+    const { data: quizData, error: quizError } = await quizAppDb
+        .from('quizzes')
+        .insert([{ title: title, duration_minutes: parseInt(duration) }])
+        .select();
+
+    if (quizError) {
+        console.error(quizError);
+        return alert("Error creating quiz");
+    }
+
+    const quizId = quizData[0].id;
+
+    // 2. Gather Questions
+    const questionItems = document.querySelectorAll('.question-item');
+    const questionsToInsert = [];
+
+    questionItems.forEach(item => {
+        const text = item.querySelector('.q-text').value;
+        const optA = item.querySelector('.q-opt-a').value;
+        const optB = item.querySelector('.q-opt-b').value;
+        const optC = item.querySelector('.q-opt-c').value;
+        const optD = item.querySelector('.q-opt-d').value;
+        const correctLetter = item.querySelector('.q-correct').value; // "A", "B"...
+
+        let correctVal = "";
+        if (correctLetter === "A") correctVal = optA;
+        if (correctLetter === "B") correctVal = optB;
+        if (correctLetter === "C") correctVal = optC;
+        if (correctLetter === "D") correctVal = optD;
+
+        if (text && optA) {
+            questionsToInsert.push({
+                quiz_id: quizId,
+                text: text,
+                options: [optA, optB, optC, optD],
+                correct_answer: correctVal
+            });
+        }
+    });
+
+    // 3. Insert Questions
+    const { error: matchError } = await quizAppDb.from('questions').insert(questionsToInsert);
+
+    if (matchError) {
+        console.error(matchError);
+        alert("Quiz created but failed to save questions.");
+    } else {
+        alert("Quiz Published Successfully!");
+        location.reload();
+    }
 }

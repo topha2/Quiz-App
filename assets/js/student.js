@@ -88,18 +88,26 @@ async function startQuiz() {
         console.log("Fullscreen denied or not supported");
     }
 
-    // Start Attempt
-    isQuizActive = true;
-    document.getElementById('quiz-ui').classList.remove('hidden');
-
-    // 1. Create Attempt in DB
+    // 1. Fetch Latest Quiz
+    let quizData = null;
     if (quizAppDb) {
+        const { data, error } = await quizAppDb
+            .from('quizzes')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (data && data.length > 0) quizData = data[0];
+    }
+
+    // 2. Create Attempt in DB
+    if (quizAppDb && quizData) {
         const { data, error } = await quizAppDb
             .from('attempts')
             .insert([{
                 student_name: name,
-                status: 'in-progress'
-                // quiz_id would go here
+                status: 'in-progress',
+                quiz_id: quizData.id
             }])
             .select();
 
@@ -110,14 +118,53 @@ async function startQuiz() {
         }
     }
 
-    // 2. Fetch Questions (Mock or DB)
-    /* 
-       Real implementation:
-       const { data } = await quizAppDb.from('questions').select('*').eq('quiz_id', quizIds);
-       currentQuestions = data;
-    */
-    currentQuestions = MOCK_QUESTIONS; // For reliability in this generated artifact
+    // 3. Fetch Questions (REAL)
+    if (quizAppDb && quizData) {
+        const { data: qData } = await quizAppDb
+            .from('questions')
+            .select('*')
+            .eq('quiz_id', quizData.id);
+
+        if (qData && qData.length > 0) {
+            currentQuestions = qData;
+        } else {
+            currentQuestions = MOCK_QUESTIONS;
+        }
+
+        // Start Timer
+        startTimer(quizData.duration_minutes * 60);
+
+    } else {
+        currentQuestions = MOCK_QUESTIONS;
+        startTimer(60 * 60); // 1 hour default
+    }
+
+    // Start Attempt
+    isQuizActive = true;
+    document.getElementById('quiz-ui').classList.remove('hidden');
+
     renderQuestion();
+}
+
+let timerInterval;
+function startTimer(durationSeconds) {
+    let timer = durationSeconds, minutes, seconds;
+    const display = document.querySelector('#timer');
+
+    timerInterval = setInterval(function () {
+        minutes = parseInt(timer / 60, 10);
+        seconds = parseInt(timer % 60, 10);
+
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) {
+            clearInterval(timerInterval);
+            finishQuiz();
+        }
+    }, 1000);
 }
 
 function renderQuestion() {
